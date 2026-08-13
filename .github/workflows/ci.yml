@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[dev]"
+      - run: pytest tests -q
+      - run: ruff check src tests
+      - run: mypy src
+
+  zero-dependencies:
+    # The entire adoption argument. A dependency creeping in is a release blocker,
+    # not a nit, so it is checked in isolation rather than as part of the suite.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install with no dependencies at all
+        run: pip install --no-deps -t /tmp/spec-only .
+      - name: Import it, and check it still verifies itself
+        run: |
+          cd /tmp
+          python -c "
+          import sys; sys.path.insert(0, '/tmp/spec-only')
+          import geospatial_spec.sentinel2 as s2
+          assert s2.boa_offset(baseline='04.00') == -1000
+          assert s2._FACTS.check_witnesses() == []
+          print('zero-dependency install verifies against its witnesses')
+          "
+
+  vendored-file:
+    # A vendored file that silently lags the package is worse than none.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python scripts/build_vendored.py --check
