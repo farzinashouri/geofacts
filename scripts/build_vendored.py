@@ -151,7 +151,7 @@ __all__ = [
     "__version__",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 '''
 
 
@@ -207,6 +207,8 @@ def build(compress: Callable[[bytes], bytes] = _compress) -> str:
     encoded = {}
     for name in WITNESSES:
         raw = (PKG / "_witnesses" / name).read_bytes()
+        # The compressor is injected so tests can prove the drift gate compares
+        # witness *content* rather than whatever bytes this zlib build emits.
         encoded[name] = base64.b64encode(compress(raw)).decode("ascii")
 
     parts.append(WITNESS_LOADER)

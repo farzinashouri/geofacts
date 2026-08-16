@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "geofacts"
-version = "0.1.0"
+version = "0.1.1"
 description = "Machine-checked geospatial product facts, reachable only with the scope that makes them correct"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -29,7 +29,7 @@ dependencies = []
 [project.urls]
 Homepage = "https://github.com/farzinashouri/geofacts"
 Repository = "https://github.com/farzinashouri/geofacts"
-Issues = "https://github.com/farzinashouri/geofacts/issues"
+"Fact table" = "https://github.com/farzinashouri/geofacts/blob/main/docs/FACTS.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
