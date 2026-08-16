@@ -8,12 +8,13 @@ version = "0.1.0"
 description = "Machine-checked geospatial product facts, reachable only with the scope that makes them correct"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Farzin Ashouri", email = "fashouri@gmail.com" }]
 keywords = ["sentinel-2", "sentinel-1", "remote-sensing", "earth-observation", "radiometry", "nodata"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -24,6 +25,11 @@ classifiers = [
 # Zero dependencies, permanently. This is the entire adoption argument:
 # a test helper that drags in a solver stack does not get vendored.
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/farzinashouri/geofacts"
+Repository = "https://github.com/farzinashouri/geofacts"
+Issues = "https://github.com/farzinashouri/geofacts/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]

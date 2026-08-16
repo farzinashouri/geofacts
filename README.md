@@ -150,7 +150,7 @@ pip install geofacts          # zero dependencies
 Or vendor the single file, since what this really competes with is copy-paste:
 
 ```bash
-curl -O https://raw.githubusercontent.com/.../geofacts.py
+curl -O https://raw.githubusercontent.com/farzinashouri/geofacts/main/vendored/geofacts.py
 ```
 
 The single file is generated from the package by `scripts/build_vendored.py` and

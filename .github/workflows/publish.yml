@@ -1,0 +1,62 @@
+name: publish
+
+# Releases are cut by publishing a GitHub Release on a v* tag. The build is
+# gated on the same three checks CI runs, because a wheel whose vendored file
+# has drifted is exactly the failure this package is supposed to make loud.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - run: pytest tests -q
+      - run: ruff check src tests
+      - run: mypy src
+      - run: python scripts/build_vendored.py --check
+
+  build:
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pipx run build
+      - name: The witnesses must be in the wheel, or the installed copy cannot check itself
+        run: |
+          python - <<'PY'
+          import glob, zipfile
+          names = zipfile.ZipFile(glob.glob("dist/*.whl")[0]).namelist()
+          for required in ("geofacts/py.typed", "geofacts/_witnesses/MTD_MSIL2A_N0400.xml"):
+              assert required in names, f"{required} missing from wheel"
+          print("wheel contents ok")
+          PY
+      - run: pipx run twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      # Trusted Publishing: PyPI mints a short-lived token from this OIDC
+      # identity, so there is no API token stored in the repo.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
