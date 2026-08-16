@@ -22,21 +22,29 @@ both `/pypi/geofacts/json` endpoints return 404).
   the artifact, not just from the source tree.
 - **Release workflow.** `.github/workflows/publish.yml`: `gate` (tests, ruff,
   mypy, vendored drift) → `build` (build, assert witnesses present in the
-  wheel, twine check) → `pypi` (Trusted Publishing, `environment: pypi`,
-  `id-token: write`). Triggered by publishing a GitHub Release.
+  wheel, twine check) → `testpypi` *or* `pypi`, both Trusted Publishing with
+  `id-token: write`. Publishing a GitHub Release always takes the `pypi` path;
+  `workflow_dispatch` defaults to `testpypi` so a manual run cannot burn a
+  version number on the real index. The two jobs carry `environment: testpypi`
+  and `environment: pypi` respectively — those strings must match the
+  Environment name field of each index's pending publisher.
+- **PR merged** as `0b66b2d`, so `main` holds the workflow — required, since
+  `release` and `workflow_dispatch` only ever run the default branch's copy.
 - **README.** The vendored-file `curl` line now points at the real raw URL
   instead of `https://raw.githubusercontent.com/...`.
 
 ## Remaining — needs the maintainer
 
-1. Create the PyPI account, then add a **pending publisher** under
+1. ~~TestPyPI pending publisher~~ — done, environment `testpypi`.
+2. Create the matching `testpypi` environment in GitHub repo settings, push
+   the two-target workflow to `main`, then Actions → publish → Run workflow →
+   target `testpypi` for the dry run.
+3. Create the PyPI account, then add a **pending publisher** under
    Publishing: owner `farzinashouri`, repo `geofacts`, workflow
-   `publish.yml`, environment `pypi`.
-2. Create the `pypi` environment in the GitHub repo settings.
-3. Optional dry run: same pending-publisher setup on TestPyPI, or a one-off
-   `twine upload --repository testpypi dist/*` with a token.
-4. Merge to `main`, tag `v0.1.0`, publish the GitHub Release — that fires the
-   workflow.
+   `publish.yml`, environment `pypi`; and create the `pypi` GitHub
+   environment.
+4. Tag `v0.1.0` by publishing the GitHub Release — that fires the workflow
+   down the `pypi` path.
 
 ## Notes
 

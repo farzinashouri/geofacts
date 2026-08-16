@@ -6,7 +6,15 @@ name: publish
 on:
   release:
     types: [published]
+  # Manual runs default to TestPyPI, so a slip of the finger cannot burn a
+  # version number on the real index.
   workflow_dispatch:
+    inputs:
+      target:
+        description: Which index to upload to
+        type: choice
+        options: [testpypi, pypi]
+        default: testpypi
 
 jobs:
   gate:
@@ -46,8 +54,28 @@ jobs:
           name: dist
           path: dist/
 
+  testpypi:
+    needs: build
+    # Dry run only: a published release always goes to the real index.
+    if: github.event_name == 'workflow_dispatch' && inputs.target == 'testpypi'
+    runs-on: ubuntu-latest
+    # Must match the Environment name registered with TestPyPI's pending
+    # publisher, or the OIDC claim is rejected.
+    environment: testpypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
   pypi:
     needs: build
+    if: github.event_name == 'release' || inputs.target == 'pypi'
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
