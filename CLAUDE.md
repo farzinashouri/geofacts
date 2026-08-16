@@ -28,6 +28,13 @@ The product is a *constraint*, not a data table: no public name may hand back a 
 
 **3. Vendorability.** [scripts/build_vendored.py](scripts/build_vendored.py) concatenates the package into [vendored/geospatial_spec.py](vendored/geospatial_spec.py) with the XML witnesses gzip+base64-embedded, so a curl'd copy still checks itself. `MODULES` there is an explicit dependency-ordered list — a new module must be added to it. [tests/test_vendored.py](tests/test_vendored.py) imports the generated file from an isolated sandbox dir and runs the package's properties against it.
 
+## Workflow
+
+- **TDD, always.** Every plan and every implementation starts with a failing unit test that pins the behavior, then the code that makes it pass. No production change lands without a test that would have failed before it.
+- **Plans are documents.** After planning, save the plan to `docs/plans/` with a numeric prefix (`001-<slug>.md`, `002-…`). If the plan changes mid-flight, update that same doc rather than leaving it stale or writing a second one.
+- **Docs track the repo.** Any change to the repo carries the corresponding update to existing docs ([README.md](README.md), [docs/FACTS.md](docs/FACTS.md), `_witnesses/PROVENANCE.md`, the plan doc) in the same change.
+- **Never commit or push.** Claude does not run `git commit` or `git push` — stage nothing on the user's behalf; leave the working tree for the user to review and commit themselves. Enforced by deny rules and a PreToolUse hook in [.claude/settings.json](.claude/settings.json).
+
 ## Constraints
 
 - **Zero runtime dependencies, permanently.** This is the adoption argument and CI enforces it in an isolated job. Never add to `dependencies`, and never import from `geocase`.
