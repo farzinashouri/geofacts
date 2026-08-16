@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Bash",
+      "Bash(git *)"
+    ],
+    "deny": [
+      "Bash(git commit)",
+      "Bash(git commit *)",
+      "Bash(git push)",
+      "Bash(git push *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // \"\"' | grep -Eq '(^|[;&|]|&&|\\|\\|)[[:space:]]*git[[:space:]]+([-a-zA-Z0-9=/._]+[[:space:]]+)*(commit|push)([[:space:]]|$)' && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"git commit/push is reserved for the user - leave the changes for them to review and commit.\"}}' || true"
+          }
+        ]
+      }
+    ]
+  }
+}

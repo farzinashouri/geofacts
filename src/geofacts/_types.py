@@ -1,7 +1,7 @@
 """Introspection types.
 
 ``SpecFact`` is deliberately *not* how facts are read. It is what
-:func:`geospatial_spec.explain` returns — a description of a fact, carrying its
+:func:`geofacts.explain` returns — a description of a fact, carrying its
 citation and the witness line that corroborates it, for tooling and error
 messages.
 
@@ -22,7 +22,7 @@ from typing import Any
 class SpecFact:
     """A fact, its authority, and the witness that corroborates it.
 
-    Returned by :func:`geospatial_spec.explain`. The ``value`` field is present
+    Returned by :func:`geofacts.explain`. The ``value`` field is present
     because an explanation without the value is useless to a human reading an
     error message — but reaching it requires having already called ``explain``
     with the scope that identifies *which* fact applies, which is the same

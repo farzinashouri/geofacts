@@ -395,6 +395,7 @@ def assert_baseline_consistent(
     metadata: Mapping[str, Any],
     *,
     assumes: str,
+    thresholds: Mapping[str, float] | None = None,
     key: str = "PROCESSING_BASELINE",
 ) -> None:
     """Runtime guard: raise if data's baseline contradicts what the code assumes.
@@ -406,6 +407,24 @@ def assert_baseline_consistent(
     invariant already — by luck of which processing their archive happens to
     carry. What they do not have is anything in their code that *records* the
     assumption, so nothing fails when the archive changes underneath it.
+
+    ``assumes`` describes the calling code, not the product, so it cannot be
+    inferred here: a value read off ``metadata`` would check the data against
+    itself and never fire. That makes a wrong ``assumes`` worse than no guard —
+    it passes silently on a matching archive and reads as verified. Derive it
+    before writing it down: if every threshold goes through
+    :func:`to_reflectance` first, the code carries no DN-scaling assumption and
+    ``assumes`` is only a claim about the expected archive; if the code compares
+    raw DNs, decode one threshold under both conventions and keep the reading
+    that matches the target it was tuned for. A raw-DN threshold below 1000 can
+    only be pre-04.00. See ``docs/SENTINEL2.md``.
+
+    ``thresholds`` turns part of that derivation into a check. Pass the raw-DN
+    constants the calling code compares against — ``{"water_dn": 1500}`` — and
+    each is decoded under the claimed convention and rejected if the result is
+    not a reflectance any real target produces. This is the half of the wrong-
+    ``assumes`` problem that is decidable without the archive's cooperation:
+    it fires on a matching archive, where the metadata check cannot.
     """
     declared = metadata.get(key)
     if declared is None:
@@ -420,6 +439,25 @@ def assert_baseline_consistent(
         code_has_offset = assumes == "post-04.00"
     else:
         code_has_offset = baseline_has_offset(assumes)
+
+    # Check the claim against the caller's own constants before checking it
+    # against the data: this half does not need the archive to disagree.
+    if thresholds:
+        offset = _FACTS.get_as("boa_add_offset", int) if code_has_offset else 0
+        impossible = {
+            name: dn for name, dn in thresholds.items() if dn + offset < 0
+        }
+        if impossible:
+            listed = ", ".join(
+                f"{name}={dn:g}" for name, dn in sorted(impossible.items())
+            )
+            raise BaselineMismatch(
+                f"code assumes {assumes}, but raw-DN threshold(s) {listed} decode "
+                f"to negative reflectance under that convention "
+                f"(BOA_ADD_OFFSET {offset}). A threshold below {-offset:d} can "
+                f"only have been tuned pre-04.00; either the assumption or the "
+                f"constants are stale."
+            )
 
     if data_has_offset != code_has_offset:
         offset = _FACTS.get_as("boa_add_offset", int)

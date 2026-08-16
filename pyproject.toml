@@ -8,12 +8,13 @@ version = "0.1.1"
 description = "Machine-checked geospatial product facts, reachable only with the scope that makes them correct"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Farzin Ashouri", email = "fashouri@gmail.com" }]
 keywords = ["sentinel-2", "sentinel-1", "remote-sensing", "earth-observation", "radiometry", "nodata"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -37,7 +38,7 @@ dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
 # The witnesses under _witnesses/ ship inside the package: without them the
 # installed copy cannot check itself, which is the property that makes the
 # table worth depending on. They are picked up as package data automatically.
-packages = ["src/geospatial_spec"]
+packages = ["src/geofacts"]
 
 [tool.ruff]
 line-length = 100

@@ -24,8 +24,9 @@ enforces that mechanically.
 
 ## Sentinel-2 L2A
 
-Source: [`src/geospatial_spec/sentinel2.py`](../src/geospatial_spec/sentinel2.py).
+Source: [`src/geofacts/sentinel2.py`](../src/geofacts/sentinel2.py).
 Witness: `MTD_MSIL2A_N0400.xml`, real ESA product metadata, vendored and checked in CI.
+For what the product *is* and why these facts bite, see [SENTINEL2.md](SENTINEL2.md).
 
 | Fact | Value | Scope | Witnessed | Why | Why it is here |
 | --- | --- | --- | --- | --- | --- |
@@ -47,11 +48,11 @@ Witness: `MTD_MSIL2A_N0400.xml`, real ESA product metadata, vendored and checked
 | `is_ambiguous_zero(product=…)` | **Hazard** | An "all bands zero" nodata heuristic lets a *single-band* zero through in an otherwise valid pixel; downstream normalisation then turns it into a plausible negative outlier rather than a masked sample. |
 | `resample_nodata_policy(product=…)` | **Hazard** | Returns the requirement — `src_nodata`/`dst_nodata`, which resamplers need it, which are safe without, and why — rather than a recommendation. |
 | `assert_nodata_declared(profile, resampling=…)` | **Hazard** | Runtime guard, importable from production. Interpolating resampling with undeclared nodata averages the masked region into its valid neighbours. Confirmed live in a real compute-side repository. |
-| `assert_baseline_consistent(metadata, assumes=…)` | **Branching** | The enforced-invariant argument. Your archive may satisfy your baseline assumption today purely by luck of which processing it carries; nothing in your code *records* that assumption, so nothing fails when the archive changes. This is that record. |
+| `assert_baseline_consistent(metadata, assumes=…, thresholds=…)` | **Branching** | The enforced-invariant argument. Your archive may satisfy your baseline assumption today purely by luck of which processing it carries; nothing in your code *records* that assumption, so nothing fails when the archive changes. This is that record. `assumes=` is a claim about your code and cannot be inferred from the product — a guess left unchecked passes silently and reads as diligence. Optional `thresholds=` decodes your own raw-DN constants under the claimed convention and rejects the impossible ones, catching that case even on a matching archive. [How to derive it](SENTINEL2.md#working-out-which-one-you-assume). |
 
 ## Sentinel-1 GRD — frozen
 
-Source: [`src/geospatial_spec/sentinel1.py`](../src/geospatial_spec/sentinel1.py).
+Source: [`src/geofacts/sentinel1.py`](../src/geofacts/sentinel1.py).
 Witness: `s1a-iw-grd-vv-annotation.xml`.
 
 **Frozen by decision, not neglect.** Three evaluated codebases treated SAR as
@@ -69,7 +70,7 @@ it. It stays because the facts are already witnessed and correct.
 
 ## Cross-sensor commons
 
-Source: [`src/geospatial_spec/common.py`](../src/geospatial_spec/common.py).
+Source: [`src/geofacts/common.py`](../src/geofacts/common.py).
 Kept deliberately small — a "common" module is where scope creep starts.
 
 | Fact | Value | Scope | Witnessed | Why | Why it is here |
