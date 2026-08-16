@@ -19,6 +19,7 @@ import base64
 import gzip
 import re
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -191,16 +192,22 @@ def _strip_module(text: str) -> str:
     return "\n".join(out)
 
 
-def build() -> str:
+def _compress(raw: bytes) -> bytes:
+    # mtime=0: gzip stamps the current time by default, which would make every
+    # build differ from the last. The *compressed bytes* still vary between
+    # zlib versions, which is why the drift gate compares decompressed content
+    # rather than these bytes -- see ``drift_reason``.
+    return gzip.compress(raw, 9, mtime=0)
+
+
+def build(compress: Callable[[bytes], bytes] = _compress) -> str:
     parts = [HEADER]
 
     # Witness data, embedded and compressed.
     encoded = {}
     for name in WITNESSES:
         raw = (PKG / "_witnesses" / name).read_bytes()
-        # mtime=0: gzip stamps the current time by default, which would make
-        # every build differ from the last and break the --check drift gate.
-        encoded[name] = base64.b64encode(gzip.compress(raw, 9, mtime=0)).decode("ascii")
+        encoded[name] = base64.b64encode(compress(raw)).decode("ascii")
 
     parts.append(WITNESS_LOADER)
     for name, blob in encoded.items():
@@ -251,6 +258,53 @@ def build() -> str:
     return body
 
 
+#: One embedded-witness assignment: the name, then its base64 lines.
+_BLOB_RE = re.compile(
+    r"_EMBEDDED_WITNESSES\[(?P<name>'[^']*'|\"[^\"]*\")\] = \(\n"
+    r"(?P<blob>(?:    \"[A-Za-z0-9+/=]*\"\n)+)\)",
+)
+
+
+def _split_witnesses(text: str) -> tuple[str, dict[str, bytes]]:
+    """Separate the code from the embedded witness *content*.
+
+    Returns the source with every base64 blob replaced by a fixed placeholder,
+    plus the decompressed bytes each blob carries. Comparing those two things
+    separately is what makes the drift gate reproducible: zlib emits different
+    bytes on different versions for the same input, so the compressed form is
+    not a fact about this repo, and only the content is.
+    """
+    witnesses: dict[str, bytes] = {}
+
+    def _take(match: re.Match[str]) -> str:
+        name = match.group("name").strip("'\"")
+        blob = "".join(re.findall(r'"([^"]*)"', match.group("blob")))
+        try:
+            witnesses[name] = gzip.decompress(base64.b64decode(blob))
+        except Exception as exc:  # unreadable blob is itself drift
+            witnesses[name] = f"<undecodable: {exc}>".encode()
+        return f"_EMBEDDED_WITNESSES[{name!r}] = <witness>"
+
+    return _BLOB_RE.sub(_take, text), witnesses
+
+
+def drift_reason(committed: str, compress: Callable[[bytes], bytes] = _compress) -> str | None:
+    """Explain how ``committed`` differs from a fresh build, or return None."""
+    fresh_code, fresh_witnesses = _split_witnesses(build(compress))
+    committed_code, committed_witnesses = _split_witnesses(committed)
+
+    if committed_code != fresh_code:
+        return "the generated code differs from the package source"
+    if committed_witnesses != fresh_witnesses:
+        changed = sorted(
+            name
+            for name in set(committed_witnesses) | set(fresh_witnesses)
+            if committed_witnesses.get(name) != fresh_witnesses.get(name)
+        )
+        return f"embedded witnesses differ: {', '.join(changed)}"
+    return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -260,22 +314,23 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    generated = build()
-
     if args.check:
         if not OUT.exists():
             print(f"{OUT.name} is missing; run scripts/build_vendored.py", file=sys.stderr)
             return 1
-        if OUT.read_text() != generated:
+        committed = OUT.read_text()
+        reason = drift_reason(committed)
+        if reason is not None:
             print(
-                f"{OUT.name} has drifted from the package source.\n"
+                f"{OUT.name} has drifted from the package source: {reason}.\n"
                 f"Run: python scripts/build_vendored.py",
                 file=sys.stderr,
             )
             return 1
-        print(f"{OUT.name} is current ({len(generated):,} bytes)")
+        print(f"{OUT.name} is current ({len(committed):,} bytes)")
         return 0
 
+    generated = build()
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(generated)
     print(f"wrote {OUT.name} ({len(generated):,} bytes)")
