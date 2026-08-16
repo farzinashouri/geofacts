@@ -161,8 +161,8 @@ class FactTable:
                 scope=scope,
                 witness=witness,
             )
-            fn.__geospatial_spec_cite__ = cite  # type: ignore[attr-defined]
-            fn.__geospatial_spec_scope__ = scope  # type: ignore[attr-defined]
+            fn.__geofacts_cite__ = cite  # type: ignore[attr-defined]
+            fn.__geofacts_scope__ = scope  # type: ignore[attr-defined]
             return fn
 
         return _decorate

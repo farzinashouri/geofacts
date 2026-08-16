@@ -3,7 +3,7 @@
 The mechanism that makes this package a tool rather than a lookup table: a
 hand-written "spec-accurate" constant is only worth depending on if it is
 verified against the actual authority, not the author's reading of a PDF. The
-witnesses under ``src/geospatial_spec/_witnesses/`` are genuine ESA product
+witnesses under ``src/geofacts/_witnesses/`` are genuine ESA product
 metadata (see PROVENANCE.md); each test asserts that a registered fact matches
 what a real granule declares.
 
@@ -19,9 +19,9 @@ from xml.etree import ElementTree
 
 import pytest
 
-import geospatial_spec.sentinel1 as s1
-import geospatial_spec.sentinel2 as s2
-from geospatial_spec.exceptions import BaselineMismatch, NodataUndeclared, ScopeRequired
+import geofacts.sentinel1 as s1
+import geofacts.sentinel2 as s2
+from geofacts.exceptions import BaselineMismatch, NodataUndeclared, ScopeRequired
 
 WITNESSES = Path(s2.__file__).parent / "_witnesses"
 
@@ -206,6 +206,32 @@ def test_assert_baseline_consistent_fires_on_mismatch() -> None:
     s2.assert_baseline_consistent(post, assumes="post-04.00")
     s2.assert_baseline_consistent(pre, assumes="pre-04.00")
     s2.assert_baseline_consistent(post, assumes="04.00")
+
+
+def test_assert_baseline_consistent_checks_thresholds_against_the_claim() -> None:
+    """A raw-DN threshold below 1000 cannot have been tuned post-04.00.
+
+    Post-04.00 the offset is -1000, so such a threshold decodes to negative
+    reflectance. This catches the claim copied from the README while the
+    constants were left untouched -- which the metadata alone cannot detect,
+    because the archive may well match the claim.
+    """
+    pre = {"PROCESSING_BASELINE": "03.01"}
+    post = {"PROCESSING_BASELINE": "04.00"}
+
+    with pytest.raises(BaselineMismatch, match="water_dn"):
+        s2.assert_baseline_consistent(
+            post, assumes="post-04.00", thresholds={"water_dn": 800}
+        )
+
+    # Plausible thresholds under the claimed convention stay silent.
+    s2.assert_baseline_consistent(
+        post, assumes="post-04.00", thresholds={"water_dn": 2500}
+    )
+    s2.assert_baseline_consistent(
+        pre, assumes="pre-04.00", thresholds={"water_dn": 800, "cloud_dn": 3000}
+    )
+    s2.assert_baseline_consistent(post, assumes="post-04.00")
 
 
 def test_assert_baseline_consistent_refuses_to_guess() -> None:

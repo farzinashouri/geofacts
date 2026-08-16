@@ -103,7 +103,7 @@ def assert_nodata_policy(
 
     Raises :class:`ScopeRequired` if *resampling* is not supplied — the answer
     depends entirely on it. For Sentinel-2 specifically, prefer
-    :func:`geospatial_spec.sentinel2.assert_nodata_declared`, which knows the
+    :func:`geofacts.sentinel2.assert_nodata_declared`, which knows the
     sentinel value as well as the policy.
     """
     if resampling is None:

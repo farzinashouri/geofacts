@@ -9,6 +9,9 @@ would import it and put through the same properties as the package.
 
 from __future__ import annotations
 
+import base64
+import gzip
+import importlib.util
 import shutil
 import subprocess
 import sys
@@ -17,7 +20,17 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-VENDORED = ROOT / "vendored" / "geospatial_spec.py"
+VENDORED = ROOT / "vendored" / "geofacts.py"
+
+
+def _builder():
+    """Import scripts/build_vendored.py as a module."""
+    path = ROOT / "scripts" / "build_vendored.py"
+    spec = importlib.util.spec_from_file_location("build_vendored", path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
 
 
 @pytest.fixture(scope="module")
@@ -26,17 +39,17 @@ def vendored(tmp_path_factory):
     if not VENDORED.exists():
         pytest.skip("run scripts/build_vendored.py first")
     sandbox = tmp_path_factory.mktemp("vendored")
-    shutil.copy(VENDORED, sandbox / "geospatial_spec.py")
+    shutil.copy(VENDORED, sandbox / "geofacts.py")
     sys.path.insert(0, str(sandbox))
-    for name in [n for n in sys.modules if n.startswith("geospatial_spec")]:
+    for name in [n for n in sys.modules if n.startswith("geofacts")]:
         del sys.modules[name]
     try:
-        import geospatial_spec as module
+        import geofacts as module
 
         yield module
     finally:
         sys.path.remove(str(sandbox))
-        for name in [n for n in sys.modules if n.startswith("geospatial_spec")]:
+        for name in [n for n in sys.modules if n.startswith("geofacts")]:
             del sys.modules[name]
 
 
@@ -48,6 +61,38 @@ def test_it_has_not_drifted() -> None:
         text=True,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_the_gate_ignores_zlib_version_differences() -> None:
+    """zlib's output is not byte-stable across versions; the gate must not be.
+
+    CI runs 3.11-3.13 with different zlib builds, so re-compressing the same
+    witness legitimately yields different bytes. Drift means the *content*
+    changed, never that the compressor did.
+    """
+    build = _builder()
+    fresh = build.build()
+    recompressed = build.build(compress=lambda raw: gzip.compress(raw, 1, mtime=0))
+    assert recompressed != fresh, "compression level must actually change bytes"
+    assert build.drift_reason(recompressed) is None
+
+
+def test_the_gate_still_catches_real_drift() -> None:
+    build = _builder()
+    fresh = build.build()
+    assert build.drift_reason(fresh) is None
+    assert build.drift_reason(fresh.replace("__version__ = ", "__vers1on__ = ")) is not None
+    assert build.drift_reason(fresh.replace("_EMBEDDED_WITNESSES", "_X", 1)) is not None
+
+
+def test_the_gate_catches_a_tampered_witness() -> None:
+    """A blob that no longer decompresses to the shipped witness is drift."""
+    build = _builder()
+    name = build.WITNESSES[0]
+    raw = (build.PKG / "_witnesses" / name).read_bytes()
+    tampered = base64.b64encode(gzip.compress(raw + b"<!-- edit -->", 9, mtime=0)).decode()
+    swapped = build.build(compress=lambda _raw: base64.b64decode(tampered))
+    assert build.drift_reason(swapped) is not None
 
 
 def test_the_guard_survives_the_build(vendored) -> None:
@@ -91,6 +136,6 @@ def test_it_has_no_third_party_imports() -> None:
         line = line.strip()
         if line.startswith(("import ", "from ")):
             root = line.split()[1].split(".")[0]
-            if root not in allowed and not root.startswith("geospatial"):
+            if root not in allowed and not root.startswith("geofacts"):
                 offenders.append(line)
     assert not offenders, f"vendored build grew dependencies: {offenders}"

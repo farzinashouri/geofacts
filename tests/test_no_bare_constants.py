@@ -20,15 +20,15 @@ import pkgutil
 
 import pytest
 
-import geospatial_spec
+import geofacts
 
 #: Public modules a user is expected to import from.
 PUBLIC_MODULES = [
-    "geospatial_spec",
-    "geospatial_spec.sentinel2",
-    "geospatial_spec.sentinel1",
-    "geospatial_spec.common",
-    "geospatial_spec.exceptions",
+    "geofacts",
+    "geofacts.sentinel2",
+    "geofacts.sentinel1",
+    "geofacts.common",
+    "geofacts.exceptions",
 ]
 
 
@@ -89,7 +89,7 @@ def test_no_public_numeric_or_string_constants(module_name: str) -> None:
 
 def test_the_offset_is_not_importable_by_any_obvious_name() -> None:
     """Trap 1, named directly: the value that started this must stay unreachable."""
-    import geospatial_spec.sentinel2 as s2
+    import geofacts.sentinel2 as s2
 
     forbidden = [
         "S2_BOA_ADD_OFFSET", "BOA_ADD_OFFSET", "OFFSET", "S2_OFFSET",
@@ -103,8 +103,8 @@ def test_the_offset_is_not_importable_by_any_obvious_name() -> None:
 def test_every_submodule_is_covered_by_this_test() -> None:
     """A new public module must not escape the check by being new."""
     discovered = {
-        f"geospatial_spec.{m.name}"
-        for m in pkgutil.iter_modules(geospatial_spec.__path__)
+        f"geofacts.{m.name}"
+        for m in pkgutil.iter_modules(geofacts.__path__)
         if not m.name.startswith("_")
     }
     uncovered = discovered - set(PUBLIC_MODULES)
@@ -116,7 +116,7 @@ def test_every_submodule_is_covered_by_this_test() -> None:
 
 def test_facts_are_reachable_only_through_explain() -> None:
     """``explain`` is the sole path to a raw value, and it costs an explicit name."""
-    import geospatial_spec.sentinel2 as s2
+    import geofacts.sentinel2 as s2
 
     fact = s2.explain("boa_add_offset")
     assert fact.value == -1000
