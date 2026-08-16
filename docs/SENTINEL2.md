@@ -108,6 +108,81 @@ It reads `PROCESSING_BASELINE` from any mapping and raises `BaselineMismatch`
 when the data contradicts the assumption. `assumes` takes a baseline string or
 `"pre-04.00"` / `"post-04.00"`.
 
+### Working out which one you assume
+
+`assumes=` is a claim about *your code*, not about the product. Nothing in the
+metadata can settle it, which is why the guard asks rather than infers — a value
+read off the data would validate the data against itself and never fire.
+
+That puts the burden somewhere real: a guess copied from this README, with your
+constants left untouched, passes silently on a matching archive and now reads as
+diligence. **A wrong `assumes=` is worse than no guard.** Derive it, in this
+order:
+
+**1. Do your constants ever touch a raw DN?** If every comparison happens after
+`to_reflectance()`, your thresholds carry no DN-scaling assumption at all — the
+offset is applied for you, exactly once, per product. `assumes=` is then a
+statement about which archive you expect to be handed, not about your constants,
+and the guard is a change-detector on your inputs. This is the position worth
+migrating to.
+
+**2. If you threshold raw DN, the constant holds the assumption.** `BOA_ADD_OFFSET`
+is `-1000`, so a post-04.00 product encodes the same physical reflectance 1000 DN
+higher than a pre-04.00 one. Compare your constant against the reflectance you
+believe it represents:
+
+```python
+from geofacts.sentinel2 import to_reflectance
+
+to_reflectance(1500, baseline="02.14")   # 0.15   <- pre-04.00 reading
+to_reflectance(1500, baseline="04.00")   # 0.05   <- post-04.00 reading
+```
+
+Whichever number matches the physical target you tuned for is your answer. Two
+shortcuts fall out of the same arithmetic:
+
+* A raw-DN threshold **below 1000** can only have been tuned pre-04.00. Read as
+  post-04.00 it decodes to negative reflectance, which no real target produces.
+* A threshold that is a round `reflectance × 10000` — `1500` for 0.15, `3000` for
+  0.30 — is pre-04.00. The post-04.00 equivalents are offset by 1000 and look
+  unrounded (`2500`, `4000`).
+
+**3. If the provenance is genuinely lost**, date the constant. The offset
+arrived with baseline 04.00 on **2022-01-25**; a threshold that predates it in
+your history, and has not been retuned since, is pre-04.00 whatever the archive
+now holds. Failing that, run the threshold over one product whose baseline you
+know from its own `PROCESSING_BASELINE` and check whether the mask it produces is
+the one you expect — a threshold read under the wrong convention typically
+collapses to empty or swallows the scene, rather than degrading subtly.
+
+Record the result at the call site. If step 1 applies, say so in a comment there
+too — it is the difference between "we checked" and "we don't have to care".
+
+### Checking the claim, not just recording it
+
+Step 2's first shortcut is decidable without the archive's cooperation, so the
+guard will do it for you. Hand it the raw-DN constants your code compares
+against:
+
+```python
+sentinel2.assert_baseline_consistent(
+    product_metadata, assumes="post-04.00", thresholds={"water_dn": 800},
+)
+# BaselineMismatch: code assumes post-04.00, but raw-DN threshold(s)
+# water_dn=800 decode to negative reflectance under that convention ...
+```
+
+This is the half of the wrong-`assumes` problem the metadata check cannot reach:
+it fires even when the archive matches the claim, because the contradiction is
+between the claim and your own constants.
+
+It is a floor, not a proof. `thresholds={"water_dn": 2500}` is consistent with
+either convention and passes silently — the high side does not discriminate,
+since a large DN decodes to an implausible reflectance under *both*. Steps 1–3
+remain the way to actually derive the value; this catches the specific case of a
+claim copied over untouched constants. Omit the argument and behaviour is
+unchanged.
+
 ## Nodata, and why zero is a trap
 
 `Special_Values` in the product metadata declares `NODATA = 0` and

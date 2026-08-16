@@ -35,6 +35,21 @@ assert_baseline_consistent(product_metadata, assumes="pre-04.00")
 assert_nodata_declared(warp_kwargs, resampling="bilinear")
 ```
 
+`assumes=` is a claim about your code, not about the product, so no library can
+infer it for you — and a value copied from this example without checking your own
+constants will pass quietly on a matching archive while recording something
+false. Pass the raw-DN constants your code actually compares against and the
+claim gets checked rather than trusted:
+
+```python
+# Rejects the claim if a threshold decodes to negative reflectance under it.
+assert_baseline_consistent(product_metadata, assumes="pre-04.00",
+                           thresholds={"water_dn": 1500})
+```
+
+Work it out first:
+[deriving `assumes=`](docs/SENTINEL2.md#working-out-which-one-you-assume).
+
 ## Nodata conventions
 
 Post-offset-removal, `0` is both the nodata sentinel and a valid dark pixel.

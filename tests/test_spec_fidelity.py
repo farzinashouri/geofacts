@@ -208,6 +208,32 @@ def test_assert_baseline_consistent_fires_on_mismatch() -> None:
     s2.assert_baseline_consistent(post, assumes="04.00")
 
 
+def test_assert_baseline_consistent_checks_thresholds_against_the_claim() -> None:
+    """A raw-DN threshold below 1000 cannot have been tuned post-04.00.
+
+    Post-04.00 the offset is -1000, so such a threshold decodes to negative
+    reflectance. This catches the claim copied from the README while the
+    constants were left untouched -- which the metadata alone cannot detect,
+    because the archive may well match the claim.
+    """
+    pre = {"PROCESSING_BASELINE": "03.01"}
+    post = {"PROCESSING_BASELINE": "04.00"}
+
+    with pytest.raises(BaselineMismatch, match="water_dn"):
+        s2.assert_baseline_consistent(
+            post, assumes="post-04.00", thresholds={"water_dn": 800}
+        )
+
+    # Plausible thresholds under the claimed convention stay silent.
+    s2.assert_baseline_consistent(
+        post, assumes="post-04.00", thresholds={"water_dn": 2500}
+    )
+    s2.assert_baseline_consistent(
+        pre, assumes="pre-04.00", thresholds={"water_dn": 800, "cloud_dn": 3000}
+    )
+    s2.assert_baseline_consistent(post, assumes="post-04.00")
+
+
 def test_assert_baseline_consistent_refuses_to_guess() -> None:
     with pytest.raises(BaselineMismatch, match="no 'PROCESSING_BASELINE'"):
         s2.assert_baseline_consistent({}, assumes="04.00")
