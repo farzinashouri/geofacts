@@ -26,6 +26,7 @@ enforces that mechanically.
 
 Source: [`src/geospatial_spec/sentinel2.py`](../src/geospatial_spec/sentinel2.py).
 Witness: `MTD_MSIL2A_N0400.xml`, real ESA product metadata, vendored and checked in CI.
+For what the product *is* and why these facts bite, see [SENTINEL2.md](SENTINEL2.md).
 
 | Fact | Value | Scope | Witnessed | Why | Why it is here |
 | --- | --- | --- | --- | --- | --- |

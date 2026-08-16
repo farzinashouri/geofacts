@@ -102,6 +102,10 @@ own assumptions back at you.
 status, and why each one earns its place — including which facts genuinely branch
 on scope and which are there for consistency.
 
+[docs/SENTINEL2.md](docs/SENTINEL2.md) explains the Sentinel-2 L2A product itself
+— the radiometry and the `boa_add_offset` branch, the ambiguous nodata zero, band
+resolutions and SCL — and how each is reached through the API.
+
 ## Your own facts
 
 Nothing here is ESA-specific. The same discipline applies to any load-bearing
