@@ -150,7 +150,7 @@ __all__ = [
     "__version__",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 '''
 
 
@@ -198,7 +198,9 @@ def build() -> str:
     encoded = {}
     for name in WITNESSES:
         raw = (PKG / "_witnesses" / name).read_bytes()
-        encoded[name] = base64.b64encode(gzip.compress(raw, 9)).decode("ascii")
+        # mtime=0: gzip stamps the wall clock into its header by default, which
+        # makes the generated file differ on every rebuild and fails --check.
+        encoded[name] = base64.b64encode(gzip.compress(raw, 9, mtime=0)).decode("ascii")
 
     parts.append(WITNESS_LOADER)
     for name, blob in encoded.items():
