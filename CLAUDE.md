@@ -11,7 +11,7 @@ pytest tests/test_spec_fidelity.py::test_name    # single test
 ruff check src tests
 mypy src                         # strict, python_version 3.11
 
-python scripts/build_vendored.py           # regenerate vendored/geospatial_spec.py
+python scripts/build_vendored.py           # regenerate vendored/geofacts.py
 python scripts/build_vendored.py --check    # CI drift gate
 python scripts/prune_witness.py <src.xml> <dst.xml>   # trim a large S1 annotation to the read subtrees
 ```
@@ -22,11 +22,11 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs three jobs: the t
 
 The product is a *constraint*, not a data table: no public name may hand back a value without being told the scope that makes the value correct. Three mechanisms enforce that, and changes must preserve all three.
 
-**1. Guards, not constants.** [src/geospatial_spec/_table.py](src/geospatial_spec/_table.py) holds a private `FactTable` keyed by fact name. Public modules ([sentinel2.py](src/geospatial_spec/sentinel2.py), [sentinel1.py](src/geospatial_spec/sentinel1.py), [common.py](src/geospatial_spec/common.py)) expose only callables that require a scope argument (`baseline=`, `product=`, …) and then call `table.get_as(...)`. Missing scope raises `ScopeRequired`. [tests/test_no_bare_constants.py](tests/test_no_bare_constants.py) mechanically fails any public name in a public module that is not a callable, exception, or enum — adding a module-level constant breaks the build by design. `SpecFact` ([_types.py](src/geospatial_spec/_types.py)) is a *return value* of `explain()`, never a module-level accessor.
+**1. Guards, not constants.** [src/geofacts/_table.py](src/geofacts/_table.py) holds a private `FactTable` keyed by fact name. Public modules ([sentinel2.py](src/geofacts/sentinel2.py), [sentinel1.py](src/geofacts/sentinel1.py), [common.py](src/geofacts/common.py)) expose only callables that require a scope argument (`baseline=`, `product=`, …) and then call `table.get_as(...)`. Missing scope raises `ScopeRequired`. [tests/test_no_bare_constants.py](tests/test_no_bare_constants.py) mechanically fails any public name in a public module that is not a callable, exception, or enum — adding a module-level constant breaks the build by design. `SpecFact` ([_types.py](src/geofacts/_types.py)) is a *return value* of `explain()`, never a module-level accessor.
 
-**2. Witnesses.** Every fact registers a `cite` (spec document) and ideally a `witness` — a zero-arg callable returning `dict[str, object]`, built by [_witness.py](src/geospatial_spec/_witness.py) (`from_xml`, `from_json`, `from_mapping`). Real ESA metadata lives in [src/geospatial_spec/_witnesses/](src/geospatial_spec/_witnesses/) and ships in the wheel, so an installed copy can verify itself. `FactTable.check_witnesses()` returns disagreements; [tests/test_spec_fidelity.py](tests/test_spec_fidelity.py) asserts it is empty. `from_mapping` is the weak form (transcription, not verification) — use sparingly; `unwitnessed()` tracks the liability list.
+**2. Witnesses.** Every fact registers a `cite` (spec document) and ideally a `witness` — a zero-arg callable returning `dict[str, object]`, built by [_witness.py](src/geofacts/_witness.py) (`from_xml`, `from_json`, `from_mapping`). Real ESA metadata lives in [src/geofacts/_witnesses/](src/geofacts/_witnesses/) and ships in the wheel, so an installed copy can verify itself. `FactTable.check_witnesses()` returns disagreements; [tests/test_spec_fidelity.py](tests/test_spec_fidelity.py) asserts it is empty. `from_mapping` is the weak form (transcription, not verification) — use sparingly; `unwitnessed()` tracks the liability list.
 
-**3. Vendorability.** [scripts/build_vendored.py](scripts/build_vendored.py) concatenates the package into [vendored/geospatial_spec.py](vendored/geospatial_spec.py) with the XML witnesses gzip+base64-embedded, so a curl'd copy still checks itself. `MODULES` there is an explicit dependency-ordered list — a new module must be added to it. [tests/test_vendored.py](tests/test_vendored.py) imports the generated file from an isolated sandbox dir and runs the package's properties against it.
+**3. Vendorability.** [scripts/build_vendored.py](scripts/build_vendored.py) concatenates the package into [vendored/geofacts.py](vendored/geofacts.py) with the XML witnesses gzip+base64-embedded, so a curl'd copy still checks itself. `MODULES` there is an explicit dependency-ordered list — a new module must be added to it. [tests/test_vendored.py](tests/test_vendored.py) imports the generated file from an isolated sandbox dir and runs the package's properties against it.
 
 ## Workflow
 

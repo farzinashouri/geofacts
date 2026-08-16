@@ -37,7 +37,7 @@ jobs:
           cd /tmp
           python -c "
           import sys; sys.path.insert(0, '/tmp/spec-only')
-          import geospatial_spec.sentinel2 as s2
+          import geofacts.sentinel2 as s2
           assert s2.boa_offset(baseline='04.00') == -1000
           assert s2._FACTS.check_witnesses() == []
           print('zero-dependency install verifies against its witnesses')

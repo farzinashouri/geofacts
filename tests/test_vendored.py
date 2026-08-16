@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-VENDORED = ROOT / "vendored" / "geospatial_spec.py"
+VENDORED = ROOT / "vendored" / "geofacts.py"
 
 
 @pytest.fixture(scope="module")
@@ -26,17 +26,17 @@ def vendored(tmp_path_factory):
     if not VENDORED.exists():
         pytest.skip("run scripts/build_vendored.py first")
     sandbox = tmp_path_factory.mktemp("vendored")
-    shutil.copy(VENDORED, sandbox / "geospatial_spec.py")
+    shutil.copy(VENDORED, sandbox / "geofacts.py")
     sys.path.insert(0, str(sandbox))
-    for name in [n for n in sys.modules if n.startswith("geospatial_spec")]:
+    for name in [n for n in sys.modules if n.startswith("geofacts")]:
         del sys.modules[name]
     try:
-        import geospatial_spec as module
+        import geofacts as module
 
         yield module
     finally:
         sys.path.remove(str(sandbox))
-        for name in [n for n in sys.modules if n.startswith("geospatial_spec")]:
+        for name in [n for n in sys.modules if n.startswith("geofacts")]:
             del sys.modules[name]
 
 
@@ -91,6 +91,6 @@ def test_it_has_no_third_party_imports() -> None:
         line = line.strip()
         if line.startswith(("import ", "from ")):
             root = line.split()[1].split(".")[0]
-            if root not in allowed and not root.startswith("geospatial"):
+            if root not in allowed and not root.startswith("geofacts"):
                 offenders.append(line)
     assert not offenders, f"vendored build grew dependencies: {offenders}"

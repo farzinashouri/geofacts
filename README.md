@@ -1,11 +1,11 @@
-# geospatial-spec
+# geofacts
 
 Geospatial product facts that you cannot read without saying which product you
 have. Zero dependencies, one vendorable file, every fact machine-checked against
 real ESA metadata.
 
 ```python
-from geospatial_spec.sentinel2 import boa_offset
+from geofacts.sentinel2 import boa_offset
 
 boa_offset(baseline="04.00")      # -1000
 boa_offset(baseline="03.01")      #     0   <- the reason this exists
@@ -26,7 +26,7 @@ data actually is.
 **Two runtime guards, importable from production code — not just tests:**
 
 ```python
-from geospatial_spec.sentinel2 import assert_baseline_consistent, assert_nodata_declared
+from geofacts.sentinel2 import assert_baseline_consistent, assert_nodata_declared
 
 # Your thresholds were tuned on pre-04.00 data. Say so, and find out when it changes.
 assert_baseline_consistent(product_metadata, assumes="pre-04.00")
@@ -49,7 +49,7 @@ compute-side code:
   CRS, and wrong.
 
 ```python
-from geospatial_spec.sentinel2 import nodata_value, is_ambiguous_zero, resample_nodata_policy
+from geofacts.sentinel2 import nodata_value, is_ambiguous_zero, resample_nodata_policy
 
 nodata_value(product="S2_L2A")           # 0
 is_ambiguous_zero(product="S2_L2A")      # True
@@ -86,7 +86,7 @@ Every fact carries two independent authorities: a specification citation, and a
 **witness** — a real product artifact, vendored in the package and checked in CI.
 
 ```python
->>> from geospatial_spec.sentinel2 import explain
+>>> from geofacts.sentinel2 import explain
 >>> print(explain("boa_add_offset"))
 boa_add_offset = -1000
   scope: baseline >= 04.00 only
@@ -112,7 +112,7 @@ Nothing here is ESA-specific. The same discipline applies to any load-bearing
 constant your team has:
 
 ```python
-from geospatial_spec import FactTable, witness
+from geofacts import FactTable, witness
 
 MY_FACTS = FactTable("acme-taxonomy")
 MY_FACTS.register(
@@ -129,13 +129,13 @@ schema, an OpenAPI document, a spec export.
 ## Install
 
 ```bash
-pip install geospatial-spec          # zero dependencies
+pip install geofacts          # zero dependencies
 ```
 
 Or vendor the single file, since what this really competes with is copy-paste:
 
 ```bash
-curl -O https://raw.githubusercontent.com/.../geospatial_spec.py
+curl -O https://raw.githubusercontent.com/.../geofacts.py
 ```
 
 The single file is generated from the package by `scripts/build_vendored.py` and

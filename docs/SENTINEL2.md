@@ -3,10 +3,10 @@
 [docs/FACTS.md](FACTS.md) is the ledger — what is registered, why each fact earns
 its row. This document is the explanation: what a Sentinel-2 L2A product actually
 *is*, which of its properties bite, and how each one is reached through
-[`geospatial_spec.sentinel2`](../src/geospatial_spec/sentinel2.py).
+[`geofacts.sentinel2`](../src/geofacts/sentinel2.py).
 
 Everything below is witnessed against `MTD_MSIL2A_N0400.xml`, real ESA product
-metadata vendored into the package ([`_witnesses/`](../src/geospatial_spec/_witnesses/)),
+metadata vendored into the package ([`_witnesses/`](../src/geofacts/_witnesses/)),
 except where explicitly noted.
 
 ## What the product is
@@ -29,7 +29,7 @@ not reflectance. They are digital numbers that must be scaled, and the scaling
 rule changed in January 2022. That change is the reason this module exists.
 
 ```python
-from geospatial_spec import sentinel2
+from geofacts import sentinel2
 
 sentinel2.explain("dtype").value        # 'uint16'
 ```

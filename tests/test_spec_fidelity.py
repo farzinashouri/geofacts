@@ -3,7 +3,7 @@
 The mechanism that makes this package a tool rather than a lookup table: a
 hand-written "spec-accurate" constant is only worth depending on if it is
 verified against the actual authority, not the author's reading of a PDF. The
-witnesses under ``src/geospatial_spec/_witnesses/`` are genuine ESA product
+witnesses under ``src/geofacts/_witnesses/`` are genuine ESA product
 metadata (see PROVENANCE.md); each test asserts that a registered fact matches
 what a real granule declares.
 
@@ -19,9 +19,9 @@ from xml.etree import ElementTree
 
 import pytest
 
-import geospatial_spec.sentinel1 as s1
-import geospatial_spec.sentinel2 as s2
-from geospatial_spec.exceptions import BaselineMismatch, NodataUndeclared, ScopeRequired
+import geofacts.sentinel1 as s1
+import geofacts.sentinel2 as s2
+from geofacts.exceptions import BaselineMismatch, NodataUndeclared, ScopeRequired
 
 WITNESSES = Path(s2.__file__).parent / "_witnesses"
 

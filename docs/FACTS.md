@@ -24,7 +24,7 @@ enforces that mechanically.
 
 ## Sentinel-2 L2A
 
-Source: [`src/geospatial_spec/sentinel2.py`](../src/geospatial_spec/sentinel2.py).
+Source: [`src/geofacts/sentinel2.py`](../src/geofacts/sentinel2.py).
 Witness: `MTD_MSIL2A_N0400.xml`, real ESA product metadata, vendored and checked in CI.
 For what the product *is* and why these facts bite, see [SENTINEL2.md](SENTINEL2.md).
 
@@ -52,7 +52,7 @@ For what the product *is* and why these facts bite, see [SENTINEL2.md](SENTINEL2
 
 ## Sentinel-1 GRD — frozen
 
-Source: [`src/geospatial_spec/sentinel1.py`](../src/geospatial_spec/sentinel1.py).
+Source: [`src/geofacts/sentinel1.py`](../src/geofacts/sentinel1.py).
 Witness: `s1a-iw-grd-vv-annotation.xml`.
 
 **Frozen by decision, not neglect.** Three evaluated codebases treated SAR as
@@ -70,7 +70,7 @@ it. It stays because the facts are already witnessed and correct.
 
 ## Cross-sensor commons
 
-Source: [`src/geospatial_spec/common.py`](../src/geospatial_spec/common.py).
+Source: [`src/geofacts/common.py`](../src/geofacts/common.py).
 Kept deliberately small — a "common" module is where scope creep starts.
 
 | Fact | Value | Scope | Witnessed | Why | Why it is here |

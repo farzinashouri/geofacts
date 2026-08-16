@@ -1,6 +1,6 @@
 # Vendored witness metadata
 
-Real product metadata against which the fact tables in `geospatial_spec` are
+Real product metadata against which the fact tables in `geofacts` are
 machine-checked (`tests/test_spec_fidelity.py`). These are *witnesses*, not
 fixtures: they are never inputs to graded code, and their retained content must
 never be edited — an edited witness is no longer an authority.

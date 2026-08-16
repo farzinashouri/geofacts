@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "geospatial-spec"
+name = "geofacts"
 version = "0.1.0"
 description = "Machine-checked geospatial product facts, reachable only with the scope that makes them correct"
 readme = "README.md"
@@ -32,7 +32,7 @@ dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
 # The witnesses under _witnesses/ ship inside the package: without them the
 # installed copy cannot check itself, which is the property that makes the
 # table worth depending on. They are picked up as package data automatically.
-packages = ["src/geospatial_spec"]
+packages = ["src/geofacts"]
 
 [tool.ruff]
 line-length = 100

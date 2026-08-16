@@ -6,14 +6,14 @@ and wrong for another. This package makes that conditionality unavoidable. Every
 public name is a callable that requires the scope which determines the answer,
 so a call site cannot dereference a value without recording what its data is.
 
-    >>> from geospatial_spec.sentinel2 import boa_offset
+    >>> from geofacts.sentinel2 import boa_offset
     >>> boa_offset(baseline="04.00")
     -1000
     >>> boa_offset(baseline="03.01")
     0
     >>> boa_offset()
     Traceback (most recent call last):
-    geospatial_spec.exceptions.ScopeRequired: ...
+    geofacts.exceptions.ScopeRequired: ...
 
 Every fact carries two authorities: a specification citation and a *witness* —
 a real product artifact, vendored and machine-checked in CI — so the table is

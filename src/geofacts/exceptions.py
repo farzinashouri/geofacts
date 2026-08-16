@@ -33,7 +33,7 @@ class ScopeRequired(GeospatialSpecError, TypeError):
 class BaselineMismatch(GeospatialSpecError):
     """Data's declared processing baseline contradicts what the code assumes.
 
-    Raised by :func:`geospatial_spec.sentinel2.assert_baseline_consistent`.
+    Raised by :func:`geofacts.sentinel2.assert_baseline_consistent`.
     The message names the offset the calling code's thresholds are wrong by,
     because "mismatch" alone does not tell a maintainer what to change.
     """
@@ -42,7 +42,7 @@ class BaselineMismatch(GeospatialSpecError):
 class NodataUndeclared(GeospatialSpecError):
     """A resampling or read profile omits the nodata declaration it needs.
 
-    Raised by :func:`geospatial_spec.sentinel2.assert_nodata_declared`. The
+    Raised by :func:`geofacts.sentinel2.assert_nodata_declared`. The
     live bug this exists for: bilinear resampling with neither ``src_nodata``
     nor ``dst_nodata`` set smears a nodata region into its valid neighbours,
     silently and in-bounds.

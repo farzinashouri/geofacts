@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 from xml.etree import ElementTree
 
-#: The subtrees geospatial_spec.sentinel1 actually reads.
+#: The subtrees geofacts.sentinel1 actually reads.
 KEEP = {"adsHeader", "imageAnnotation"}
 
 
