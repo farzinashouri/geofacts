@@ -207,9 +207,9 @@ def build(compress: Callable[[bytes], bytes] = _compress) -> str:
     encoded = {}
     for name in WITNESSES:
         raw = (PKG / "_witnesses" / name).read_bytes()
-        # mtime=0: gzip stamps the wall clock into its header by default, which
-        # makes the generated file differ on every rebuild and fails --check.
-        encoded[name] = base64.b64encode(gzip.compress(raw, 9, mtime=0)).decode("ascii")
+        # The compressor is injected so tests can prove the drift gate compares
+        # witness *content* rather than whatever bytes this zlib build emits.
+        encoded[name] = base64.b64encode(compress(raw)).decode("ascii")
 
     parts.append(WITNESS_LOADER)
     for name, blob in encoded.items():
