@@ -98,6 +98,10 @@ A fact the witness does not corroborate is a test failure, not an opinion. This
 is what keeps the table from being one person's reading of a PDF asserting its
 own assumptions back at you.
 
+[docs/FACTS.md](docs/FACTS.md) lists all 18 registered facts with scope, witness
+status, and why each one earns its place — including which facts genuinely branch
+on scope and which are there for consistency.
+
 ## Your own facts
 
 Nothing here is ESA-specific. The same discipline applies to any load-bearing
