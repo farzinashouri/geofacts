@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "geofacts"
-version = "0.1.1"
+version = "0.1.2"
 description = "Machine-checked geospatial product facts, reachable only with the scope that makes them correct"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -39,6 +39,22 @@ dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
 # installed copy cannot check itself, which is the property that makes the
 # table worth depending on. They are picked up as package data automatically.
 packages = ["src/geofacts"]
+
+[tool.hatch.build.targets.sdist]
+# The sdist is what conda-forge builds from, and its build script runs the
+# suite. So it carries everything `pytest tests` and `build_vendored.py
+# --check` touch: tests/ needs scripts/ and vendored/ to check the single-file
+# copy against a fresh generation, and dropping either turns the drift gate --
+# the thing that makes a vendored copy safe to trust -- into a collection error.
+include = [
+    "/src",
+    "/tests",
+    "/scripts",
+    "/vendored",
+    "/docs",
+    "/README.md",
+    "/LICENSE",
+]
 
 [tool.ruff]
 line-length = 100
